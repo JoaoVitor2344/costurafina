@@ -1,0 +1,71 @@
+<div 
+  id="auth-backdrop"
+  (click)="onBackdropClick($event)"
+  class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ease-in-out flex items-center justify-center p-4"
+  [class.opacity-100]="isOpen()"
+  [class.opacity-0]="!isOpen()"
+  [class.pointer-events-none]="!isOpen()">
+  
+  <div 
+    (click)="$event.stopPropagation()"
+    class="relative bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transition-transform transform duration-300 ease-in-out"
+    [class.scale-100]="isOpen()"
+    [class.scale-95]="!isOpen()">
+      
+      <!-- Close Button -->
+      <button (click)="close.emit()" class="absolute top-4 right-4 z-20 text-gray-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-700/70 p-2 rounded-full transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+
+      <div class="p-8">
+        <h2 class="text-2xl font-bold text-center text-white mb-2">{{ mode() === 'login' ? 'Bem-vindo(a) de Volta' : 'Criar Conta' }}</h2>
+        <p class="text-center text-gray-400 mb-6">{{ mode() === 'login' ? 'Faça login para continuar' : 'Comece com a Costura Fina' }}</p>
+
+        <form (submit)="onSubmit($event)" class="space-y-4">
+          @if (mode() === 'signup') {
+            <div>
+              <label for="name" class="sr-only">Nome</label>
+              <input type="text" name="name" id="name" placeholder="Nome Completo" required
+                class="w-full bg-zinc-800 border-2 border-zinc-700 text-white placeholder-gray-500 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+            </div>
+          }
+          <div>
+            <label for="email" class="sr-only">Email</label>
+            <input type="email" name="email" id="email" placeholder="Endereço de E-mail" required
+              class="w-full bg-zinc-800 border-2 border-zinc-700 text-white placeholder-gray-500 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+          </div>
+          <div>
+            <label for="password" class="sr-only">Senha</label>
+            <input type="password" name="password" id="password" placeholder="Senha" required
+              class="w-full bg-zinc-800 border-2 border-zinc-700 text-white placeholder-gray-500 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+          </div>
+          
+          @if (error()) {
+            <p class="text-red-500 text-sm text-center">{{ error() }}</p>
+          }
+
+          <button type="submit" [disabled]="isSubmitting()"
+            class="w-full flex items-center justify-center rounded-full border border-transparent bg-blue-600 px-6 py-3 text-base font-bold text-white shadow-sm hover:bg-blue-500 transition-colors disabled:bg-blue-800 disabled:cursor-not-allowed">
+             @if (isSubmitting()) {
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processando...
+            } @else {
+              <span>{{ mode() === 'login' ? 'Entrar' : 'Cadastrar' }}</span>
+            }
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-400">
+                {{ mode() === 'login' ? 'Não tem uma conta?' : 'Já tem uma conta?' }}
+                <button (click)="setMode(mode() === 'login' ? 'signup' : 'login')" class="font-medium text-blue-500 hover:text-blue-400">
+                    {{ mode() === 'login' ? 'Cadastre-se' : 'Entrar' }}
+                </button>
+            </p>
+        </div>
+      </div>
+  </div>
+</div>

@@ -1,0 +1,115 @@
+<div 
+  (click)="close.emit()"
+  class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
+  [class.opacity-100]="isOpen()"
+  [class.opacity-0]="!isOpen()"
+  [class.pointer-events-none]="!isOpen()">
+  
+  <div 
+    (click)="$event.stopPropagation()"
+    class="fixed top-0 right-0 h-full w-full max-w-lg bg-zinc-900 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out"
+    [class.translate-x-0]="isOpen()"
+    [class.translate-x-full]="!isOpen()">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between p-6 border-b border-zinc-800">
+        <h2 class="text-xl font-bold text-white">Finalizar Compra</h2>
+        <button (click)="close.emit()" class="text-gray-400 hover:text-white transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="flex-grow overflow-y-auto">
+        @if (isOrderConfirmed()) {
+          <div class="flex flex-col items-center justify-center h-full text-center p-8">
+            <div class="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mb-6">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="text-2xl font-bold text-white">Pedido Confirmado!</h3>
+            <p class="text-gray-400 mt-2 max-w-sm">Obrigado pela sua compra. Um e-mail de confirmação foi enviado para {{ email() }}.</p>
+            <button (click)="continueShopping()" class="mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full transition-colors">
+              Continuar Comprando
+            </button>
+          </div>
+        } @else {
+          <div class="p-6">
+            <h3 class="text-lg font-medium text-white">Resumo do Pedido</h3>
+            <ul class="divide-y divide-zinc-800 my-4">
+              @for (item of cartService.cartItems(); track item.id) {
+                <li class="py-2 flex justify-between items-center text-sm">
+                  <div class="flex items-center">
+                    <img [ngSrc]="item.image" [alt]="item.name" class="w-10 h-10 rounded-md object-cover mr-4" width="40" height="40">
+                    <div>
+                      <p class="text-white">{{ item.name }}</p>
+                      <p class="text-gray-400">{{ item.variant.color.name }} / {{ item.variant.size }} / Qtd: {{ item.quantity }}</p>
+                    </div>
+                  </div>
+                  <p class="text-white">R${{ (item.price * item.quantity).toFixed(2).replace('.', ',') }}</p>
+                </li>
+              }
+            </ul>
+            <div class="border-t border-zinc-700 pt-4 space-y-2 text-sm">
+              <div class="flex justify-between"><p class="text-gray-400">Subtotal</p><p class="text-white">R${{ cartService.subtotal().toFixed(2).replace('.', ',') }}</p></div>
+              <div class="flex justify-between"><p class="text-gray-400">Frete</p><p class="text-white">{{ shippingCost() > 0 ? 'R$' + shippingCost().toFixed(2).replace('.', ',') : 'Grátis' }}</p></div>
+              <div class="flex justify-between"><p class="text-gray-400">Impostos (8%)</p><p class="text-white">R${{ taxAmount().toFixed(2).replace('.', ',') }}</p></div>
+              <div class="flex justify-between text-base font-bold text-white border-t border-zinc-700 pt-2 mt-2"><p>Total</p><p>R${{ totalAmount().toFixed(2).replace('.', ',') }}</p></div>
+            </div>
+
+            <form (submit)="placeOrder($event)" class="mt-8 space-y-4">
+              <div>
+                <h3 class="text-lg font-medium text-white mb-4">Informações de Entrega</h3>
+                @if(authService.currentUser()?.addresses?.length) {
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    @for(addr of authService.currentUser()?.addresses; track addr.id) {
+                      <div (click)="selectAddress(addr)"
+                           class="p-4 border-2 rounded-lg cursor-pointer transition-colors"
+                           [class]="selectedAddressId() === addr.id ? 'border-blue-500 bg-blue-500/10' : 'border-zinc-700 hover:border-zinc-600'">
+                        <p class="font-semibold text-white">{{ addr.name }}</p>
+                        <p class="text-sm text-gray-400">{{ addr.address }}</p>
+                        <p class="text-sm text-gray-400">{{ addr.city }}, {{ addr.postalCode }}</p>
+                      </div>
+                    }
+                  </div>
+                }
+                <div class="grid grid-cols-1 gap-4 mt-4">
+                  <input (input)="name.set($any($event.target).value)" [value]="name()" type="text" placeholder="Nome Completo" required class="bg-zinc-800 border-zinc-700 rounded-md p-3 text-white focus:ring-blue-500 focus:border-blue-500 w-full">
+                  <input (input)="email.set($any($event.target).value)" [value]="email()" type="email" placeholder="Endereço de E-mail" required class="bg-zinc-800 border-zinc-700 rounded-md p-3 text-white focus:ring-blue-500 focus:border-blue-500 w-full">
+                  <input (input)="address.set($any($event.target).value)" [value]="address()" type="text" placeholder="Endereço" required class="bg-zinc-800 border-zinc-700 rounded-md p-3 text-white focus:ring-blue-500 focus:border-blue-500 w-full">
+                  <div class="flex gap-4">
+                    <input (input)="city.set($any($event.target).value)" [value]="city()" type="text" placeholder="Cidade" required class="bg-zinc-800 border-zinc-700 rounded-md p-3 text-white focus:ring-blue-500 focus:border-blue-500 w-full">
+                    <input (input)="postalCode.set($any($event.target).value)" [value]="postalCode()" type="text" placeholder="CEP" required class="bg-zinc-800 border-zinc-700 rounded-md p-3 text-white focus:ring-blue-500 focus:border-blue-500 w-full">
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 class="text-lg font-medium text-white">Detalhes do Pagamento</h3>
+                 <div class="grid grid-cols-1 gap-4 mt-4">
+                  <input (input)="cardNumber.set($any($event.target).value)" [value]="cardNumber()" type="text" placeholder="Número do Cartão (16 dígitos)" pattern="\d{16}" required class="bg-zinc-800 border-zinc-700 rounded-md p-3 text-white focus:ring-blue-500 focus:border-blue-500 w-full">
+                  <div class="flex gap-4">
+                    <input (input)="cardExpiry.set($any($event.target).value)" [value]="cardExpiry()" type="text" placeholder="MM / AA" required class="bg-zinc-800 border-zinc-700 rounded-md p-3 text-white focus:ring-blue-500 focus:border-blue-500 w-full">
+                    <input (input)="cardCvc.set($any($event.target).value)" [value]="cardCvc()" type="text" placeholder="CVC" pattern="\d{3,4}" required class="bg-zinc-800 border-zinc-700 rounded-md p-3 text-white focus:ring-blue-500 focus:border-blue-500 w-full">
+                  </div>
+                </div>
+              </div>
+
+              @if (error()) {
+                <p class="text-red-500 text-sm">{{ error() }}</p>
+              }
+
+              <button type="submit" [disabled]="!isFormValid() || isProcessing()" class="w-full flex items-center justify-center rounded-full border border-transparent bg-blue-600 px-6 py-3 text-base font-bold text-white shadow-sm hover:bg-blue-500 transition-colors disabled:bg-blue-800 disabled:cursor-not-allowed">
+                @if (isProcessing()) {
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processando...
+                } @else {
+                  <span>Finalizar Pedido &ndash; R${{ totalAmount().toFixed(2).replace('.', ',') }}</span>
+                }
+              </button>
+            </form>
+          </div>
+        }
+      </div>
+  </div>
+</div>

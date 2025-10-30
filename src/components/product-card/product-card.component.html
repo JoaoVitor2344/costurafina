@@ -1,0 +1,40 @@
+@if (product()) {
+  <div 
+    (click)="productClicked.emit(product())"
+    (keydown.enter)="productClicked.emit(product())"
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="'Ver detalhes de ' + product().name"
+    class="group relative flex flex-col h-full bg-zinc-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-blue-600/20 transition-all duration-300 ease-in-out transform hover:-translate-y-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-blue-500">
+    <div class="relative aspect-w-4 aspect-h-5 w-full overflow-hidden">
+        <img [ngSrc]="product().imageUrls[0]" [alt]="product().name" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" width="800" height="1000" priority />
+        <button 
+          (click)="toggleWishlist($event)"
+          [attr.aria-label]="(wishlistService.isWishlisted()(product().id) ? 'Remover da' : 'Adicionar à') + ' Lista de Desejos'"
+          class="absolute top-4 right-4 z-10 p-2 bg-black/40 rounded-full text-white hover:bg-black/60 transition-colors opacity-0 group-hover:opacity-100">
+            @if (wishlistService.isWishlisted()(product().id)) {
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+              </svg>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.66l1.318-1.342a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+              </svg>
+            }
+        </button>
+    </div>
+    <div class="p-6 flex flex-col flex-grow">
+      <h3 class="text-sm text-gray-400">{{ product().category }}</h3>
+      <p class="mt-1 text-lg font-semibold text-gray-100">{{ product().name }}</p>
+      <div class="flex-grow"></div>
+      <div class="flex justify-between items-center mt-4">
+        <p class="text-xl font-medium text-gray-200">${{ product().variants[0]?.price.toFixed(2) }}</p>
+        <button 
+          (click)="onSelectOptions($event)"
+          class="text-sm font-bold py-2 px-4 rounded-full bg-blue-600 text-white hover:bg-blue-500 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+          Ver Opções
+        </button>
+      </div>
+    </div>
+  </div>
+}

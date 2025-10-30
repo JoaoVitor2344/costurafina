@@ -1,0 +1,105 @@
+<div 
+  id="order-history-backdrop"
+  (click)="onBackdropClick($event)"
+  class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
+  [class.opacity-100]="isOpen()"
+  [class.opacity-0]="!isOpen()"
+  [class.pointer-events-none]="!isOpen()">
+  
+  <div 
+    class="fixed top-0 right-0 h-full w-full max-w-2xl bg-zinc-900 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out"
+    [class.translate-x-0]="isOpen()"
+    [class.translate-x-full]="!isOpen()">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-zinc-800 flex-shrink-0">
+      <h2 class="text-xl font-bold text-white">Histórico de Pedidos</h2>
+      <button (click)="close.emit()" class="text-gray-400 hover:text-white transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <!-- Orders -->
+    <div class="flex-grow overflow-y-auto p-6">
+      @if (orderService.userOrders().length > 0) {
+        <div class="space-y-8">
+          @for (order of orderService.userOrders(); track order.id) {
+            <div class="bg-zinc-800 rounded-lg p-6 border border-zinc-700 animate-slide-up">
+              <div class="flex flex-col md:flex-row justify-between md:items-center border-b border-zinc-700 pb-4 mb-4">
+                <div>
+                  <p class="text-sm text-gray-400">Pedido #{{ order.id.split('-')[1] }}</p>
+                  <p class="text-lg font-semibold text-white">Data do Pedido: {{ formatDate(order.date) }}</p>
+                </div>
+                <div class="mt-4 md:mt-0 md:text-right">
+                  <p class="text-sm text-gray-400">Valor Total</p>
+                  <p class="text-xl font-bold text-white">R${{ order.totalAmount.toFixed(2).replace('.', ',') }}</p>
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <div class="flex justify-between items-center">
+                   <h4 class="text-md font-semibold text-white">Status</h4>
+                   <span class="font-bold text-sm"
+                    [class.text-yellow-400]="order.status === 'Processando'"
+                    [class.text-blue-400]="order.status === 'Enviado' || order.status === 'Em Trânsito' || order.status === 'Saiu para Entrega'"
+                    [class.text-green-400]="order.status === 'Entregue'"
+                    [class.text-red-500]="order.status === 'Cancelado'">
+                    {{ order.status }}
+                  </span>
+                </div>
+                <div class="w-full bg-zinc-700 rounded-full h-1.5 mt-2">
+                  <div class="rounded-full h-1.5 transition-all duration-500" 
+                       [style.width]="getStatusProgress(order.status)"
+                       [class.bg-yellow-400]="order.status === 'Processando'"
+                       [class.bg-blue-400]="order.status === 'Enviado' || order.status === 'Em Trânsito' || order.status === 'Saiu para Entrega'"
+                       [class.bg-green-400]="order.status === 'Entregue'"
+                       [class.bg-red-500]="order.status === 'Cancelado'">
+                  </div>
+                </div>
+              </div>
+
+              <h4 class="text-md font-semibold text-white mb-2 mt-6">Itens</h4>
+              <ul class="divide-y divide-zinc-700">
+                @for (item of order.items; track item.id) {
+                  <li class="py-4 flex">
+                    <div class="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-zinc-700">
+                      <img [ngSrc]="item.image" [alt]="item.name" class="h-full w-full object-cover object-center" width="80" height="80">
+                    </div>
+                    <div class="ml-4 flex flex-1 flex-col">
+                      <div>
+                        <div class="flex justify-between text-base font-medium text-white">
+                          <h3>{{ item.name }}</h3>
+                          <p class="ml-4">R${{ item.price.toFixed(2).replace('.', ',') }}</p>
+                        </div>
+                         <p class="mt-1 text-sm text-gray-400">{{ item.variant.color.name }} / {{ item.variant.size }}</p>
+                        <p class="mt-1 text-sm text-gray-400">Qtd: {{ item.quantity }}</p>
+                      </div>
+                      @if (order.status === 'Entregue' && !productService.hasUserReviewed(item.productId)) {
+                        <div class="flex flex-1 items-end justify-start text-sm">
+                           <button (click)="onReviewProduct(item.productId)" class="font-medium text-blue-500 hover:text-blue-400 transition-colors">Escrever uma avaliação</button>
+                        </div>
+                      }
+                    </div>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="text-center py-20">
+          <svg class="mx-auto h-12 w-12 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <h3 class="mt-2 text-lg font-medium text-white">Nenhum pedido ainda</h3>
+          <p class="mt-1 text-sm text-gray-400">Você ainda não fez nenhum pedido conosco. Vamos mudar isso!</p>
+          <div class="mt-6">
+            <button (click)="close.emit()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-full transition-colors">
+              Começar a Comprar
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
